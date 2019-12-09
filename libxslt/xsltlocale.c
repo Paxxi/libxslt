@@ -15,6 +15,7 @@
 
 #include <string.h>
 #include <libxml/xmlmemory.h>
+#include <uwp_compat/encoding.h>
 
 #include "xsltlocale.h"
 #include "xsltutils.h"
@@ -37,6 +38,7 @@ xmlRMutexPtr xsltLocaleMutex = NULL;
 struct xsltRFC1766Info_s {
       /*note typedef unsigned char xmlChar !*/
     xmlChar    tag[XSLTMAX_LANGTAGLEN+1];
+    xsltLocaleChar    tagW[XSLTMAX_LANGTAGLEN+1];
       /*note typedef LCID xsltLocale !*/
     xsltLocale lcid;
 };
@@ -428,14 +430,23 @@ xsltLocaleStrcmp(xsltLocale locale, const xsltLocaleChar *str1, const xsltLocale
     (void)locale;
 #ifdef XSLT_LOCALE_WINAPI
 {
+    xsltRFC1766Info* p = xsltLocaleList + locale;
     int ret;
+    NLSVERSIONINFOEX nlsinfo;
+
     if (str1 == str2) return(0);
     if (str1 == NULL) return(-1);
     if (str2 == NULL) return(1);
-    ret = CompareStringW(locale, 0, str1, -1, str2, -1);
+    nlsinfo.dwNLSVersionInfoSize = sizeof(nlsinfo);
+    if (!GetNLSVersionEx(COMPARE_STRING, p->tagW, &nlsinfo))
+    {
+      xsltTransformError(NULL, NULL, NULL, "xsltLocaleStrcmp : CompareStringEx fail\n");
+      return(0);
+    }
+    ret = CompareStringEx(p->tagW, 0, str1, -1, str2, -1, (LPNLSVERSIONINFO)&nlsinfo, NULL, 0);
     if (ret == 0) {
-        xsltTransformError(NULL, NULL, NULL, "xsltLocaleStrcmp : CompareStringW fail\n");
-        return(0);
+      xsltTransformError(NULL, NULL, NULL, "xsltLocaleStrcmp : CompareStringEx fail\n");
+      return(0);
     }
     return(ret - 2);
 }
@@ -454,10 +465,18 @@ xsltLocaleStrcmp(xsltLocale locale, const xsltLocaleChar *str1, const xsltLocale
  * Returns TRUE
  */
 BOOL CALLBACK
-xsltCountSupportedLocales(LPSTR lcid) {
-    (void) lcid;
+xsltCountSupportedLocales(
+  LPWSTR locale,
+  DWORD localeFlags,
+  LPARAM sentinel
+)
+{
+  (void)localeFlags;
+  (void)sentinel;
+  if (wcschr(locale, L'-'))
     ++xsltLocaleListSize;
-    return(TRUE);
+
+  return(TRUE);
 }
 
 /**
@@ -469,52 +488,36 @@ xsltCountSupportedLocales(LPSTR lcid) {
  * Returns TRUE if not at the end of the array
  */
 BOOL CALLBACK
-xsltIterateSupportedLocales(LPSTR lcid) {
-    static int count = 0;
-    xmlChar    iso639lang [XSLTMAX_ISO639LANGLEN  +1];
-    xmlChar    iso3136ctry[XSLTMAX_ISO3166CNTRYLEN+1];
-    int        k, l;
-    xsltRFC1766Info *p = xsltLocaleList + count;
+xsltIterateSupportedLocales(LPWSTR locale, DWORD localeFlags, LPARAM sentinel) {
+  static int count = 0;
+  xsltRFC1766Info* p = xsltLocaleList + count;
 
-    k = sscanf(lcid, "%lx", (long*)&p->lcid);
-    if (k < 1) goto end;
-    /*don't count terminating null character*/
-    k = GetLocaleInfoA(p->lcid, LOCALE_SISO639LANGNAME,
-                       (char *) iso639lang, sizeof(iso639lang));
-    if (--k < 1) goto end;
-    l = GetLocaleInfoA(p->lcid, LOCALE_SISO3166CTRYNAME,
-                       (char *) iso3136ctry, sizeof(iso3136ctry));
-    if (--l < 1) goto end;
+  if (!wcschr(locale, L'-'))
+    return TRUE;
 
-    {  /*fill results*/
-	xmlChar    *q = p->tag;
-	memcpy(q, iso639lang, k);
-	q += k;
-	*q++ = '-';
-	memcpy(q, iso3136ctry, l);
-	q += l;
-	*q = '\0';
-    }
-    ++count;
-end:
-    return((count < xsltLocaleListSize) ? TRUE : FALSE);
+  p->lcid = count;
+  WideCharToMultiByte(CP_UTF8, 0, locale, -1, p->tag, XSLTMAX_LANGTAGLEN, NULL, NULL);
+  wcscpy_s(p->tagW, XSLTMAX_LANGTAGLEN, locale);
+  ++count;
+
+  return((count < xsltLocaleListSize) ? TRUE : FALSE);
 }
 
 
 static void
 xsltEnumSupportedLocales(void) {
-    xmlRMutexLock(xsltLocaleMutex);
-    if (xsltLocaleListSize <= 0) {
-	size_t len;
+  xmlRMutexLock(xsltLocaleMutex);
+  if (xsltLocaleListSize <= 0) {
+    size_t len;
 
-	EnumSystemLocalesA(xsltCountSupportedLocales, LCID_SUPPORTED);
+    EnumSystemLocalesEx(xsltCountSupportedLocales, LOCALE_WINDOWS, 0, NULL);
 
-	len = xsltLocaleListSize * sizeof(xsltRFC1766Info);
-	xsltLocaleList = xmlMalloc(len);
-	memset(xsltLocaleList, 0, len);
-	EnumSystemLocalesA(xsltIterateSupportedLocales, LCID_SUPPORTED);
-    }
-    xmlRMutexUnlock(xsltLocaleMutex);
+    len = xsltLocaleListSize * sizeof(xsltRFC1766Info);
+    xsltLocaleList = xmlMalloc(len);
+    memset(xsltLocaleList, 0, len);
+    EnumSystemLocalesEx(xsltIterateSupportedLocales, LOCALE_WINDOWS, 0, NULL);
+  }
+  xmlRMutexUnlock(xsltLocaleMutex);
 }
 
 #endif /*def XSLT_LOCALE_WINAPI*/

@@ -36,6 +36,7 @@
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <windows.h>
+#include <uwp_compat/encoding.h>
 #ifndef INVALID_FILE_ATTRIBUTES
 #define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
 #endif
@@ -278,11 +279,16 @@ static int
 xsltCheckFilename (const char *path)
 {
 #ifdef HAVE_STAT
+  wchar_t* pathW = to_utf16(path, -1);
+  if (!pathW)
+    return 1;
+
     struct stat stat_buffer;
 #if defined(_WIN32) && !defined(__CYGWIN__)
     DWORD dwAttrs;
 
-    dwAttrs = GetFileAttributes(path);
+    dwAttrs = GetFileAttributesW(pathW);
+    free(pathW);
     if (dwAttrs != INVALID_FILE_ATTRIBUTES) {
         if (dwAttrs & FILE_ATTRIBUTE_DIRECTORY) {
             return 2;

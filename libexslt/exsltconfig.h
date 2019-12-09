@@ -18,35 +18,35 @@ extern "C" {
  *
  * the version string like "1.2.3"
  */
-#define LIBEXSLT_DOTTED_VERSION "@VERSION@"
+#define LIBEXSLT_DOTTED_VERSION "1.1.29"
 
 /**
  * LIBEXSLT_VERSION:
  *
  * the version number: 1.2.3 value is 10203
  */
-#define LIBEXSLT_VERSION @LIBXSLT_VERSION_NUMBER@
+#define LIBEXSLT_VERSION 10129
 
 /**
  * LIBEXSLT_VERSION_STRING:
  *
  * the version number string, 1.2.3 value is "10203"
  */
-#define LIBEXSLT_VERSION_STRING "@LIBXSLT_VERSION_NUMBER@"
+#define LIBEXSLT_VERSION_STRING "10129"
 
 /**
  * LIBEXSLT_VERSION_EXTRA:
  *
  * extra version information, used to show a CVS compilation
  */
-#define	LIBEXSLT_VERSION_EXTRA "@LIBXSLT_VERSION_EXTRA@"
+#define	LIBEXSLT_VERSION_EXTRA ""
 
 /**
  * WITH_CRYPTO:
  *
  * Whether crypto support is configured into exslt
  */
-#cmakedefine WITH_CRYPTO
+/* #undef WITH_CRYPTO */
 #if WITH_CRYPTO
 #define EXSLT_CRYPTO_ENABLED
 #endif

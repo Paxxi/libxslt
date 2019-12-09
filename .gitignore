@@ -15,7 +15,6 @@ autom4te.cache
 broken.xsl
 compile
 config.guess
-config.h
 config.h.in
 config.h.in~
 config.log
@@ -25,13 +24,11 @@ configure
 depcomp
 install-sh
 libexslt.pc
-libexslt/exsltconfig.h
 libtool
 libxslt-1.1.24.tar.gz
 libxslt.pc
 libxslt.spec
 libxslt.spec.in.orig
-libxslt/xsltconfig.h
 ltmain.sh
 missing
 python/*.pyc
@@ -54,3 +51,6 @@ tests/XSLTMark/db1000.xml
 tests/XSLTMark/db10000.xml
 tests/plugins/plugin.res
 xsltproc/testThreads
+build*/
+CMakeFiles/
+CMakeCache.txt
