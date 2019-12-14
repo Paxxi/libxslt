@@ -15,7 +15,9 @@
 
 #include <string.h>
 #include <libxml/xmlmemory.h>
+#ifdef MS_APP
 #include <uwp_compat/encoding.h>
+#endif
 
 #include "xsltlocale.h"
 #include "xsltutils.h"
