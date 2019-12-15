@@ -9,9 +9,7 @@ option(WITH_DEBUG "Enable XML debugging module" ON)
 option(WITH_MEM_DEBUG "Enable memory debugger" OFF)
 option(WITH_RUN_DEBUG "Enable memory debugger" OFF)
 
-if(WINDOWS_STORE)
-  find_package(uwp_compat REQUIRED NO_MODULE)
-endif()
+find_package(uwp_compat REQUIRED NO_MODULE)
 
 include(CheckIncludeFile)
 include(CheckFunctionExists)
@@ -175,12 +173,8 @@ if(WITH_ICONV)
 endif()
 
 find_package(libxml2 REQUIRED NO_MODULE)
-target_link_libraries(libxslt PRIVATE libxml2::libxml2)
-target_link_libraries(libexslt PRIVATE libxml2::libxml2)
-if (WINDOWS_STORE)
-  target_link_libraries(libxslt PRIVATE uwp_compat::uwp_compat)
-  target_link_libraries(libexslt PRIVATE uwp_compat::uwp_compat)
-endif()
+target_link_libraries(libxslt PRIVATE libxml2::libxml2 uwp_compat::uwp_compat)
+target_link_libraries(libexslt PRIVATE libxml2::libxml2 uwp_compat::uwp_compat)
 
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(
