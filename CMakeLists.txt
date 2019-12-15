@@ -180,8 +180,6 @@ target_link_libraries(libexslt PRIVATE libxml2::libxml2)
 if (WINDOWS_STORE)
   target_link_libraries(libxslt PRIVATE uwp_compat::uwp_compat)
   target_link_libraries(libexslt PRIVATE uwp_compat::uwp_compat)
-  target_compile_definitions(libxslt PRIVATE MS_APP)
-  target_compile_definitions(libexslt PRIVATE MS_APP)
 endif()
 
 include(CMakePackageConfigHelpers)
